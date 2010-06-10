@@ -3,3 +3,4 @@ debug.log
 .DS_Store
 pkg/
 doc/
+*.gem
