@@ -800,7 +800,23 @@ module ActiveRecord
         config = @connection_options
         @connection = case connection_mode
                       when :odbc
-                        ODBC.connect config[:dsn], config[:username], config[:password]
+                        driver_attrs = config[:dsn].split(';')
+
+                        if driver_attrs.size > 1
+                          # DSN-less connection
+                          drv = ::ODBC::Driver.new
+                          drv.name = 'Driver1'
+                          driver_attrs.each do |param|
+                            pv = param.split('=')
+                            next if pv.size < 2
+                            drv.attrs[pv[0]] = pv[1]
+                          end
+                          db = ::ODBC::Database.new
+                          db.drvconnect(drv)
+                        else
+                          # DSN given
+                          ODBC.connect(config[:dsn], config[:username], config[:password])
+                        end
                       when :adonet
                         System::Data::SqlClient::SqlConnection.new.tap do |connection|
                           connection.connection_string = System::Data::SqlClient::SqlConnectionStringBuilder.new.tap do |cs|
